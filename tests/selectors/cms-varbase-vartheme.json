@@ -1,0 +1,42 @@
+{
+  "css": {
+    "modal": ".ui-dialog, [role=\"dialog\"], .dialog-off-canvas-main-canvas, .modal",
+    "main nav": "#toolbar-bar, .toolbar-bar, .toolbar-menu, .gin--navigation, .navbar",
+    "main nav item": ".toolbar-menu a, .gin--navigation a, .navbar a",
+    "page title": "h1.page-title, .region-page-title h1, .page-header h1",
+    "drupal page heading": "h1",
+    "save button": "#edit-submit, .button--primary, input[value=\"Save\"], button[type=\"submit\"].btn-primary",
+    "delete button": ".button--danger, a.button[href*='delete'], .btn-danger",
+    "primary button": ".button--primary, .btn-primary",
+    "notice success": ".messages--status, .alert-success, .messages[role=\"contentinfo\"]",
+    "notice error": ".messages--error, .alert-danger, .messages[role=\"alert\"]",
+    "notice warning": ".messages--warning, .alert-warning",
+    "drupal admin status messages": ".messages--status, .alert-success",
+    "drupal admin error messages": ".messages--error, .alert-danger",
+    "drupal admin warning messages": ".messages--warning, .alert-warning",
+    "breadcrumb": ".breadcrumb, nav[role=\"navigation\"].breadcrumb, .gin-breadcrumb",
+    "local tasks": ".tabs--primary, [data-drupal-nav-tabs], .nav-tabs",
+    "local task item": ".tabs--primary li, .tabs__tab, .nav-tabs li",
+    "local actions": ".local-actions, .action-links",
+    "content area": ".layout-container main, main[role=\"main\"], .page-content, .main-content",
+    "form": ".layout-container form, main form, form",
+    "form item": ".form-item, .form-group, .mb-3",
+    "form input": ".form-element, input.form-text, input.form-control",
+    "form select": ".form-element--type-select, select.form-select, select.form-control",
+    "form textarea": "textarea.form-textarea, textarea.form-control",
+    "form actions": ".form-actions, .gin-sticky-form-actions",
+    "data table": "table.views-table, table.responsive-enabled, table.table",
+    "table header": "thead tr",
+    "table row": "tbody tr",
+    "table first row": "tbody tr:first-child",
+    "status report": ".system-status-report",
+    "permissions table": "#permissions, table#permissions",
+    "user menu": ".toolbar-tab--toolbar-item-user, .toolbar-icon-user",
+    "search input": "input[data-drupal-selector*='search'], input.form-search"
+  },
+  "xpath": {
+    "page main heading": "//h1[contains(@class,'page-title')] | //main//h1",
+    "first table row": "//table//tbody/tr[1]",
+    "messages block": "//div[contains(@class,'messages')] | //div[contains(@class,'alert')]"
+  }
+}

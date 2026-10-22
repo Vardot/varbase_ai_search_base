@@ -1,0 +1,140 @@
+name: 'Varbase AI Search Base'
+description: >-
+  Experimental, opt-in vector index for "Ask AI": applies
+  Varbase Search Base, then builds a Search API server and index of every node
+  and Canvas page with AI Search on the site's default vector database
+  provider. The answering half (the agent, AI Answers and the Canvas pattern)
+  is the varbase_ai_answers_base recipe, which requires this one. Needs a default
+  embeddings model and a default vector database provider (Configuration > AI
+  > AI settings) before it is applied. Treat as experimental while AI Search
+  is alpha.
+type: 'Varbase AI'
+recipes:
+  # Varbase search first: Search API, the Content index, the search_index view
+  # mode and the Canvas search page the Ask AI answers sit beside.
+  - varbase_search_base
+install:
+  - node
+  - search_api
+  - ai
+  - ai_search
+config:
+  # Everything here is new for this feature. Config that already exists on the
+  # site (the search_index view mode from Drupal CMS Search, for example) is
+  # left as it is rather than treated as a conflict.
+  strict: false
+  actions:
+    ai.settings:
+      # Indexing embeds content, so the apply must stop early and roll back
+      # when no embeddings model is configured rather than fail mid-index.
+      verifySetupAi:
+        operation_type_has_default_model:
+          - embeddings
+    # A "Search index" view display per content type renders a node to clean
+    # HTML for embedding. Skipped where Drupal CMS Search already created it.
+    core.entity_view_display.node.*.default:
+      cloneAs: node.%.search_index
+    search_api.server.content_vector:
+      # Resolves the embeddings engine and its vector size from the site's
+      # default embeddings model, and the vector database from the site's
+      # default VDB provider (ai.settings: default_vdb_provider), so nothing
+      # here is tied to one provider. The apply fails with "No default VDB
+      # provider is set" until one is chosen.
+      setupVdbServerWithDefaults:
+        id: content_vector
+        name: 'Content vector (Ask AI)'
+        description: 'AI Search on the site''s default vector database provider. Used by the Varbase AI Answers agent.'
+        backend: search_api_ai_search
+        backend_config:
+          # Only used to count tokens per chunk; blank is accepted and avoids
+          # depending on a chat model the site may not have.
+          chat_model: ''
+          database_settings:
+            database_name: varbase_ai_search
+            collection: content_vector
+            metric: cosine_similarity
+          embedding_strategy: contextual_chunks
+          embedding_strategy_configuration:
+            # 300 leaves margin for small-context embeddings models once the
+            # contextual title and URL are appended to every chunk.
+            chunk_size: '300'
+            chunk_min_overlap: '100'
+            contextual_content_max_percentage: '30'
+            skip_moderation: false
+          embedding_strategy_details: ''
+          include_raw_embedding_vector: false
+    search_api.index.content_vector:
+      setupVdbIndex:
+        id: content_vector
+        name: 'Content vector (Ask AI)'
+        description: 'Every node and Canvas page, chunked and embedded for AI Answers. Mirrors the datasources of the Content index.'
+        server: content_vector
+        datasource_settings:
+          'entity:canvas_page':
+            languages:
+              default: true
+              selected: {  }
+          'entity:node':
+            bundles:
+              default: true
+              selected: {  }
+            languages:
+              default: true
+              selected: {  }
+        processor_settings:
+          add_url: {  }
+          aggregated_field: {  }
+          custom_value: {  }
+          # A public question box must never cite unpublished content. It also
+          # keeps the run alive: an unpublished page renders nothing but Twig
+          # debug comments for anonymous, the HTML-to-Markdown converter
+          # rejects comment-only HTML, and Search API aborts the whole batch.
+          entity_status: {  }
+          entity_type: {  }
+          language_with_fallback: {  }
+          rendered_item: {  }
+        # The AI Search tracker keeps the per-chunk bookkeeping that AI Answers
+        # retrieval depends on; the core "default" tracker does not.
+        tracker_settings:
+          ai_search_tracker:
+            indexing_order: fifo
+        options:
+          cron_limit: 5
+          delete_on_fail: true
+          index_directly: true
+          track_changes_in_references: true
+        field_settings:
+          rendered_item:
+            label: 'Rendered HTML output'
+            property_path: rendered_item
+            type: text
+            configuration:
+              roles:
+                - anonymous
+              view_mode:
+                'entity:canvas_page':
+                  ':default': default
+                'entity:node':
+                  ':default': search_index
+          title:
+            label: Title
+            datasource_id: 'entity:node'
+            property_path: title
+            type: text
+            dependencies:
+              module:
+                - node
+          title_1:
+            label: Title
+            datasource_id: 'entity:canvas_page'
+            property_path: title
+            type: text
+            dependencies:
+              module:
+                - canvas
+          url:
+            label: URI
+            property_path: search_api_url
+            type: string
+            configuration:
+              absolute: true

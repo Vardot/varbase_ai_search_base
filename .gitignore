@@ -1,0 +1,7 @@
+/vendor/
+/node_modules/
+.DS_Store
+tests/reports/
+tests/screenshots/
+tests/videos/
+*.log

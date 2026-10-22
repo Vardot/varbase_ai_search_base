@@ -1,0 +1,45 @@
+{
+    "name": "drupal/varbase_ai_search_base",
+    "description": "Varbase AI Search: a vector index of the site's content with AI Search over the site's default vector database provider, the retrieval half of Ask AI. Experimental. Opt-in: never applied by default.",
+    "type": "drupal-recipe",
+    "keywords": [
+        "recipe",
+        "Varbase recipes",
+        "Drupal recipes",
+        "Varbase AI",
+        "Drupal AI",
+        "AI Search",
+        "RAG",
+        "semantic search",
+        "vector index",
+        "Search API"
+    ],
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://github.com/Vardot/varbase_ai_search_base",
+    "authors": [
+        {
+            "name": "Vardot",
+            "homepage": "https://www.vardot.com",
+            "role": "Maintainer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/Vardot/varbase_ai_search_base/issues",
+        "source": "https://github.com/Vardot/varbase_ai_search_base"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "drupal/ai": "^1.4",
+        "drupal/ai_search": "^1.3@alpha",
+        "drupal/core": "^11.4",
+        "drupal/key": "^1.18",
+        "drupal/search_api": "^1.40",
+        "drupal/varbase_search_base": "~1"
+    },
+    "suggest": {
+        "drupal/ai_vdb_provider_mariadb": "The vectors in the site's own MariaDB 11.7+ database, no extra service. The only provider with a stable release.",
+        "drupal/ai_vdb_provider_milvus": "The first supported vector backend (docs/decisions/0001). Needs a Milvus server outside Upsun.",
+        "drupal/ai_vdb_provider_sqlite": "A vector database in one file through sqlite-vec, no service to run. What the pilot was verified with on DDEV."
+    }
+}
