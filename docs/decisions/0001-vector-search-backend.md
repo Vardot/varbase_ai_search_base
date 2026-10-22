@@ -15,10 +15,9 @@ Drupal provider module.
   *AI Search*, then a vector database), so the recipe does not hard-wire Milvus and another provider can be
   added later without changing it.
 - Milvus runs outside Upsun. Its credentials go in the Key module.
-- Each vector database is its own private recipe, so Ask AI stays independent of them:
-  [varbase_ai_vdb_milvus](https://github.com/Vardot/varbase_ai_vdb_milvus),
-  [varbase_ai_vdb_mariadb](https://github.com/Vardot/varbase_ai_vdb_mariadb) and
-  [varbase_ai_vdb_sqlite](https://github.com/Vardot/varbase_ai_vdb_sqlite). Each runs inside the same DDEV
+- Each vector database is its own recipe, so Ask AI stays independent of them:
+  [varbase_ai_vdb_milvus](https://www.drupal.org/project/varbase_ai_vdb_milvus) and
+  [varbase_ai_vdb_mariadb](https://www.drupal.org/project/varbase_ai_vdb_mariadb). Each runs inside the same DDEV
   project or against a remote server where that makes sense, and each ships a test that needs no AI key.
 
 ## Options checked

@@ -5,3 +5,4 @@ tests/reports/
 tests/screenshots/
 tests/videos/
 *.log
+.gitlab-ci-local/
