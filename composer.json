@@ -2,7 +2,7 @@
     "name": "drupal/varbase_ai_search_base",
     "description": "Varbase AI Search: a vector index of the site's content with AI Search over the site's default vector database provider, the retrieval half of Ask AI. Experimental. Opt-in: never applied by default.",
     "type": "drupal-recipe",
-    "version": "1.0.0-alpha1",
+    "version": "1.0.x-dev",
     "keywords": [
         "recipe",
         "Varbase recipes",
