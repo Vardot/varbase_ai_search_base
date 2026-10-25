@@ -40,7 +40,7 @@
     },
     "suggest": {
         "drupal/ai_vdb_provider_mariadb": "The vectors in the site's own MariaDB 11.7+ database, no extra service. The only provider with a stable release.",
-        "drupal/ai_vdb_provider_milvus": "The first supported vector backend (docs/decisions/0001). Needs a Milvus server outside Upsun.",
+        "drupal/ai_vdb_provider_milvus": "The first supported vector backend. Needs a Milvus server outside Upsun.",
         "drupal/ai_vdb_provider_sqlite": "A vector database in one file through sqlite-vec, no service to run. What the pilot was verified with on DDEV."
     }
 }

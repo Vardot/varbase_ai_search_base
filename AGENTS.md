@@ -9,12 +9,10 @@ GitHub repository is a mirror and takes no issues or pull requests.
 
 ## Before you start
 
+- **Documentation** lives on the Varbase docs site: [docs.varbase.vardot.com](https://docs.varbase.vardot.com/developers/understanding-varbase/varbase-ai-recipes/varbase-ai-search-base). Keep `README.md` short and link there; add no `docs/` folder.
 - **`CHANGELOG.md`**: what changed in each release, newest first. Read it before proposing a change.
 - **Issues and merge requests** on drupal.org: the Problem/Motivation, Proposed resolution and the reasoning behind
   recent changes.
-- **`README.md`**: what was checked, what was not, and the known issues.
-- **`docs/decisions/0001-vector-search-backend.md`**: why the vector database is the site's default provider rather
-  than a fixed one.
 
 ## When you make a change
 
