@@ -50,7 +50,8 @@ config:
           # depending on a chat model the site may not have.
           chat_model: ''
           database_settings:
-            database_name: varbase_ai_search
+            # Empty: the provider's own database (Drupal's for MariaDB, default for Milvus).
+            database_name: ''
             collection: content_vector
             metric: cosine_similarity
           embedding_strategy: contextual_chunks
