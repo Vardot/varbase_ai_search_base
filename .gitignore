@@ -6,3 +6,4 @@ tests/screenshots/
 tests/videos/
 *.log
 .gitlab-ci-local/
+/node_modules

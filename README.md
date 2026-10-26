@@ -97,13 +97,9 @@ recipe itself, so a fresh `composer install` elsewhere has the modules but not t
 
 ## Automated testing
 
-GitLab CI on [git.drupalcode.org](https://git.drupalcode.org/project/varbase_ai_search_base) (`.gitlab-ci.yml`) runs on every merge
-request and every push to `1.0.x`, like the other Varbase AI recipes: `composer validate` and a lint of every YAML
-file.
-
-The functional tests in `tests/features` (Playwright and Cucumber through
-[`@vardot/varbase-e2e`](https://www.npmjs.com/package/@vardot/varbase-e2e)) run against a site of your own:
-`yarn install`, then `LAUNCH_URL=https://your-site.ddev.site yarn test`.
+GitLab CI on [git.drupalcode.org](https://git.drupalcode.org/project/varbase_ai_search_base) (`.gitlab-ci.yml`) builds
+a Varbase 11 site, applies this recipe twice and runs the Varbase functional testing suite in `tests/` on it. See
+[tests/README.md](tests/README.md) to run it against a site of your own.
 
 ## License
 

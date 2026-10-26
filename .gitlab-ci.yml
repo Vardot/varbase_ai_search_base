@@ -1,15 +1,13 @@
 ################################################################################
-# Basic build + validate GitLab CI for the Varbase AI Search Base recipe.
-#
-# Mirrors the build / validate stages of the Varbase project template, reduced
-# to the minimum a recipe needs: validate composer.json (build) and lint every
-# YAML file - recipe.yml + config (validate). No dependency install / browser
-# tests here (kept basic).
+# GitLab CI for the Varbase AI Search Base recipe: validate composer.json (build), lint
+# every YAML file (validate), then apply the recipe twice on a fresh Varbase 11
+# site and run the Varbase functional testing suite on it (test).
 ################################################################################
 
 stages:
   - build
   - validate
+  - test
 
 variables:
   # Drupal 11.4.0 released 2026-07-01; pinned templates ref $CORE_STABLE is still 11.3.
@@ -52,3 +50,114 @@ validate:yaml-lint:
       print('Checked YAML files; errors:', bad)
       sys.exit(1 if bad else 0)
       PY
+
+# = test = a fresh Varbase 11 site, the recipe applied twice, then the suite.
+# Needs no AI key: scenarios tagged @ai-provider run only in the lane below.
+.varbase-e2e:
+  stage: test
+  needs: []
+  image: registry.gitlab.com/drupal-infrastructure/drupalci/drupalci-environments/php-8.4-ubuntu-apache:production
+  services:
+    # MariaDB 11.8 LTS, as in DDEV: vector support needs 11.7 or later.
+    - name: mariadb:11.8
+      alias: database
+  timeout: 60m
+  variables:
+    MYSQL_ROOT_PASSWORD: root
+    MYSQL_DATABASE: drupal
+    MYSQL_USER: drupaltestbot
+    MYSQL_PASSWORD: drupaltestbotpw
+    LAUNCH_URL: "http://localhost"
+    LOGIN_USER: "webmaster"
+    LOGIN_PASS: "dD.123123ddd"
+    HEADLESS: "true"
+    SLOW_MO: "0"
+    BROWSER: "chromium"
+    _BUILD_DIR: "/tmp/site-build"
+    RECIPE: "varbase_ai_search_base"
+    # System packages the suite needs, such as imagemagick for image uploads.
+    APT_PACKAGES: ""
+    # The AI provider for the run: a testing recipe under tests/recipes, or empty.
+    PROVIDER_RECIPE: "tests/recipes/varbase_ai_testing_provider"
+    # When set, the recipe must stop with this message before a provider is set up.
+    NO_PROVIDER_MESSAGE: "does not have a default model"
+    # Packages required next to the recipe, such as the vector database recipe.
+    EXTRA_PACKAGES: "drupal/varbase_ai_vdb_mariadb:1.0.x-dev"
+    # Recipes applied before this one, in apply order; en:<module> enables a module.
+    BEFORE_RECIPES: "varbase_ai_vdb_mariadb"
+  artifacts:
+    when: on_failure
+    paths:
+      - tests/reports
+      - tests/screenshots
+      - tests/videos
+    expire_in: 1 week
+  before_script:
+    # Node 22 from the tarball.
+    - curl -fsSL https://nodejs.org/dist/latest-v22.x/ -o /tmp/node-index.html
+    - NODE_TARBALL=$(grep -oE 'node-v22\.[0-9.]+-linux-x64\.tar\.gz' /tmp/node-index.html | head -1)
+    - curl -fsSL "https://nodejs.org/dist/latest-v22.x/$NODE_TARBALL" -o /tmp/node.tar.gz
+    - tar -xzf /tmp/node.tar.gz -C /usr/local --strip-components=1
+    # varbase-e2e's postinstall scaffolds files; keep ours.
+    - cp cucumber.js /tmp/cucumber.js.bak
+    - npm install --no-audit --no-fund
+    - cp /tmp/cucumber.js.bak cucumber.js
+    - git checkout -- tests/ playwright.config.ts 2>/dev/null || true
+    - git clean -fdq tests/ 2>/dev/null || true
+    - ./node_modules/.bin/playwright install --with-deps chromium
+    # Varbase resizes images with ImageMagick; the image has no convert binary.
+    - '[ -z "$APT_PACKAGES" ] || apt-get install -y -qq $APT_PACKAGES'
+    # Varbase 11 with this recipe from the checkout.
+    - composer create-project "drupal/varbase_project:~11.0.0" $_BUILD_DIR --no-interaction --no-progress --no-install
+    - cd $_BUILD_DIR
+    - composer config minimum-stability dev
+    - composer config prefer-stable true
+    - composer config allow-plugins true -n
+    # Keep the recipes as packages: recipe-unpack would drop them from recipes/.
+    - IGNORE=$(for p in drupal/$RECIPE $EXTRA_PACKAGES; do printf '"%s",' "${p%%:*}"; done)
+    - composer config --json extra.drupal-recipe-unpack.ignore "[${IGNORE%,}]"
+    - composer config repositories.recipe '{"type":"path","url":"'"$CI_PROJECT_DIR"'","options":{"symlink":false}}'
+    - composer require "drupal/$RECIPE:*@dev" $EXTRA_PACKAGES --with-all-dependencies --no-interaction --no-progress
+    - DRUSH="$_BUILD_DIR/$(composer config bin-dir)/drush --root=$_BUILD_DIR/web"
+    - mkdir -p web/sites/default/files && chmod -R 777 web/sites/default/files
+    - rm -rf /var/www/html && ln -s $_BUILD_DIR/web /var/www/html
+    - $DRUSH site:install varbase --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@database/$MYSQL_DATABASE --account-name=webmaster --account-pass=$LOGIN_PASS --site-name="Varbase AI Search Base CI" --locale=en install_configure_form.enable_update_status_emails=NULL -y
+    # Testing only: lets the AI module test provider (EchoAI) be installed.
+    - chmod u+w web/sites/default web/sites/default/settings.php
+    - echo "\$settings['extension_discovery_scan_tests'] = TRUE;" >> web/sites/default/settings.php
+    # Varbase's form protection and login flood limits, off for the robot.
+    - $DRUSH pm:uninstall antibot -y || true
+    - $DRUSH config:set honeypot.settings time_limit 0 -y || true
+    - $DRUSH config:set user.flood ip_limit 1000000 -y
+    - $DRUSH config:set user.flood user_limit 1000000 -y
+    # One testing user per Varbase editorial role, named after the role.
+    - for role in content_editor content_admin seo_admin site_admin; do $DRUSH user:create $role --mail=$role@example.test --password=$LOGIN_PASS; $DRUSH user:role:add $role $role; done
+    - $DRUSH user:create authenticated_user --mail=authenticated_user@example.test --password=$LOGIN_PASS
+    - if [ -n "$NO_PROVIDER_MESSAGE" ]; then ! $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y > /tmp/no-provider.log 2>&1 && grep -q "$NO_PROVIDER_MESSAGE" /tmp/no-provider.log && echo "Stopped without a provider, as expected."; fi
+    - for r in $PROVIDER_RECIPE $BEFORE_RECIPES; do case $r in en:*) $DRUSH pm:enable "${r#en:}" -y;; tests/*) $DRUSH recipe "$CI_PROJECT_DIR/$r" -y;; *) $DRUSH recipe "$_BUILD_DIR/recipes/$r" -y;; esac; $DRUSH cache:rebuild; done
+    # Applied twice: the second run must change nothing and not fail.
+    - $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y
+    - $DRUSH cache:rebuild
+    - $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y
+    - $DRUSH cache:rebuild
+  script:
+    - chown -R www-data:www-data $_BUILD_DIR
+    - '[ -z "$OPENAI_API_KEY" ] || echo "PassEnv OPENAI_API_KEY" > /etc/apache2/conf-enabled/zz-openai.conf'
+    - service apache2 start
+    # The first requests after a cache rebuild build the caches; make them before the suite.
+    - for p in / /user/login; do curl -s -o /dev/null -w "Warm-up $p %{http_code} in %{time_total}s\n" "$LAUNCH_URL$p"; done
+    - cd "$CI_PROJECT_DIR"
+    - npm test
+
+varbase-e2e-test:
+  extends: .varbase-e2e
+
+# The @ai-provider scenarios, with OpenAI as the provider. Runs only when the
+# project has a masked OPENAI_API_KEY CI/CD variable.
+varbase-e2e-test (AI provider):
+  extends: .varbase-e2e
+  rules:
+    - if: $OPENAI_API_KEY
+  variables:
+    PROVIDER_RECIPE: "tests/recipes/varbase_ai_testing_openai"
+    CUCUMBER_TAGS: "@ai-provider and not @wip"
