@@ -10,7 +10,6 @@
   "scripts": {
     "test": "cucumber-js --config cucumber.js",
     "test:headed": "HEADLESS=false cucumber-js --config cucumber.js",
-    "test:ai-provider": "CUCUMBER_TAGS='@ai-provider and not @wip' cucumber-js --config cucumber.js",
     "generate-reports": "generate-reports"
   },
   "dependencies": {

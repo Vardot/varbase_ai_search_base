@@ -52,7 +52,7 @@ validate:yaml-lint:
       PY
 
 # = test = a fresh Varbase 11 site, the recipe applied twice, then the suite.
-# Needs no AI key: scenarios tagged @ai-provider run only in the lane below.
+# AI calls go to an amazee.ai trial that Drupal CMS AI sets up: no key needed.
 .varbase-e2e:
   stage: test
   needs: []
@@ -77,8 +77,8 @@ validate:yaml-lint:
     RECIPE: "varbase_ai_search_base"
     # System packages the suite needs, such as imagemagick for image uploads.
     APT_PACKAGES: ""
-    # The AI provider for the run: a testing recipe under tests/recipes, or empty.
-    PROVIDER_RECIPE: "tests/recipes/varbase_ai_testing_provider"
+    # Drupal CMS AI first: it sets up an amazee.ai trial as the default AI provider.
+    PROVIDER_RECIPE: "drupal_cms_ai"
     # When set, the recipe must stop with this message before a provider is set up.
     NO_PROVIDER_MESSAGE: "does not have a default model"
     # Packages required next to the recipe, such as the vector database recipe.
@@ -122,9 +122,6 @@ validate:yaml-lint:
     - mkdir -p web/sites/default/files && chmod -R 777 web/sites/default/files
     - rm -rf /var/www/html && ln -s $_BUILD_DIR/web /var/www/html
     - $DRUSH site:install varbase --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@database/$MYSQL_DATABASE --account-name=webmaster --account-pass=$LOGIN_PASS --site-name="Varbase AI Search Base CI" --locale=en install_configure_form.enable_update_status_emails=NULL -y
-    # Testing only: lets the AI module test provider (EchoAI) be installed.
-    - chmod u+w web/sites/default web/sites/default/settings.php
-    - echo "\$settings['extension_discovery_scan_tests'] = TRUE;" >> web/sites/default/settings.php
     # Varbase's form protection and login flood limits, off for the robot.
     - $DRUSH pm:uninstall antibot -y || true
     - $DRUSH config:set honeypot.settings time_limit 0 -y || true
@@ -135,6 +132,10 @@ validate:yaml-lint:
     - $DRUSH user:create authenticated_user --mail=authenticated_user@example.test --password=$LOGIN_PASS
     - if [ -n "$NO_PROVIDER_MESSAGE" ]; then ! $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y > /tmp/no-provider.log 2>&1 && grep -q "$NO_PROVIDER_MESSAGE" /tmp/no-provider.log && echo "Stopped without a provider, as expected."; fi
     - for r in $PROVIDER_RECIPE $BEFORE_RECIPES; do case $r in en:*) $DRUSH pm:enable "${r#en:}" -y;; tests/*) $DRUSH recipe "$CI_PROJECT_DIR/$r" -y;; *) $DRUSH recipe "$_BUILD_DIR/recipes/$r" -y;; esac; $DRUSH cache:rebuild; done
+    # The amazee.ai trial signup can fail for a moment on amazee.ai's side; try it again before giving up.
+    - EMBEDDINGS='echo \Drupal::config("ai.settings")->get("default_providers.embeddings.provider_id");'
+    - for i in 1 2 3; do [ -n "$($DRUSH php:eval "$EMBEDDINGS")" ] && break; sleep 30; $DRUSH recipe $_BUILD_DIR/recipes/drupal_cms_ai -y; $DRUSH cache:rebuild; done
+    - echo "Default embeddings provider - $($DRUSH php:eval "$EMBEDDINGS")"
     # Applied twice: the second run must change nothing and not fail.
     - $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y
     - $DRUSH cache:rebuild
@@ -142,7 +143,6 @@ validate:yaml-lint:
     - $DRUSH cache:rebuild
   script:
     - chown -R www-data:www-data $_BUILD_DIR
-    - '[ -z "$OPENAI_API_KEY" ] || echo "PassEnv OPENAI_API_KEY" > /etc/apache2/conf-enabled/zz-openai.conf'
     - service apache2 start
     # The first requests after a cache rebuild build the caches; make them before the suite.
     - for p in / /user/login; do curl -s -o /dev/null -w "Warm-up $p %{http_code} in %{time_total}s\n" "$LAUNCH_URL$p"; done
@@ -151,13 +151,3 @@ validate:yaml-lint:
 
 varbase-e2e-test:
   extends: .varbase-e2e
-
-# The @ai-provider scenarios, with OpenAI as the provider. Runs only when the
-# project has a masked OPENAI_API_KEY CI/CD variable.
-varbase-e2e-test (AI provider):
-  extends: .varbase-e2e
-  rules:
-    - if: $OPENAI_API_KEY
-  variables:
-    PROVIDER_RECIPE: "tests/recipes/varbase_ai_testing_openai"
-    CUCUMBER_TAGS: "@ai-provider and not @wip"

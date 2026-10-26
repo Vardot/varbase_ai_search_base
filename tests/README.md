@@ -5,8 +5,9 @@ Varbase 11 site with this recipe applied.
 
 | Feature | Covers |
 | --- | --- |
-| `01-01-ai-search-base-index.feature` | The vector server, connected to its collection on the default vector database, and the index of content and Canvas pages |
-| `01-02-ai-search-base-access.feature` | Only the webmaster manages the vector index |
+| `01-01-ai-search-base-index.feature` | The webmaster sees the site's content in a vector index connected to its vector database |
+| `01-02-ai-search-base-access.feature` | Only the webmaster opens the vector index |
+| `01-03-ai-search-base-accessibility.feature` | The vector index page gives every link a name |
 
 ## Run it
 
@@ -21,10 +22,10 @@ The site needs the webmaster (`webmaster`) and one user per role, named after th
 
 ## AI provider
 
-The recipe stops when no embeddings model is set up: CI checks that first. It then makes the AI module's test
-provider (EchoAI) the default with `tests/recipes/varbase_ai_testing_provider`, applies Varbase AI VDB: MariaDB,
-whose own database holds the vectors. No key is needed.
+The recipe stops when no embeddings model is set up: CI checks that first. It then applies Drupal CMS AI,
+which sets up an amazee.ai trial as the default provider, so no key is needed and content is embedded by a
+real model. Varbase AI VDB: MariaDB is the vector database, on MariaDB 11.8. The chatbot and Ask AI suites ask
+real questions against this index.
 
-EchoAI does not return real vectors, so content is not embedded in CI. The `@ai-provider` scenario indexes the
-content with a real provider (`npm run test:ai-provider`); in CI it runs in its own job, only when the project
-has an `OPENAI_API_KEY` variable.
+The index page is held to the link name and ARIA role checks: Search API's own "Index now"
+fields have no labels, which comes from Search API, not this recipe.
