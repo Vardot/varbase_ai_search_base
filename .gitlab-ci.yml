@@ -81,8 +81,8 @@ validate:yaml-lint:
     PROVIDER_RECIPE: "drupal_cms_ai"
     # When set, the recipe must stop with this message before a provider is set up.
     NO_PROVIDER_MESSAGE: "does not have a default model"
-    # Packages required next to the recipe, such as the vector database recipe.
-    EXTRA_PACKAGES: "drupal/varbase_ai_vdb_mariadb:1.0.x-dev"
+    # Packages required next to the recipe: the vector database recipe, and the Varbase Starter dev line for its Drupal CMS Search 2.2.7 fix.
+    EXTRA_PACKAGES: "drupal/varbase_ai_vdb_mariadb:1.0.x-dev drupal/varbase_starter:1.0.x-dev"
     # Recipes applied before this one, in apply order; en:<module> enables a module.
     BEFORE_RECIPES: "varbase_ai_vdb_mariadb"
   artifacts:
