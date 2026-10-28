@@ -15,6 +15,7 @@ variables:
   IGNORE_PROJECT_DRUPAL_CORE_VERSION: "1"
   COMPOSER_ALLOW_SUPERUSER: "1"
   COMPOSER_MEMORY_LIMIT: "-1"
+  DRUPAL_CMS_TELEMETRY: "0"
 
 # Run for merge requests and branch pushes.
 workflow:
@@ -85,6 +86,7 @@ validate:yaml-lint:
     EXTRA_PACKAGES: "drupal/varbase_ai_vdb_mariadb:1.0.x-dev drupal/varbase_starter:1.0.x-dev"
     # Recipes applied before this one, in apply order; en:<module> enables a module.
     BEFORE_RECIPES: "varbase_ai_vdb_mariadb"
+    DRUPAL_CMS_TELEMETRY: "0"
   artifacts:
     when: on_failure
     paths:
