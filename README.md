@@ -1,7 +1,7 @@
 [![Varbase](https://raw.githubusercontent.com/Vardot/varbase/11.0.x/images/varbase-logo.png)](https://www.drupal.org/project/varbase)
 
 # Varbase AI Search Base
-[![Varbase AI Search Base](https://img.shields.io/badge/Varbase%20AI%20Search%20Base-1.0.0--beta1-0d6efc?labelColor=001d38&style=flat-square)](https://www.drupal.org/project/varbase_ai_search_base)
+[![Varbase AI Search Base](https://img.shields.io/badge/Varbase%20AI%20Search%20Base-1.0.0--beta2-0d6efc?labelColor=001d38&style=flat-square)](https://www.drupal.org/project/varbase_ai_search_base)
 
 An **opt-in** Drupal recipe that gives a Varbase 11 site a vector index of its own content: Varbase
 Search Base, then a Search API server and index of every node and Canvas page through AI Search into the site's
