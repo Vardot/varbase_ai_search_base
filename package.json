@@ -5,7 +5,7 @@
   "private": true,
   "author": "Vardot",
   "engines": {
-    "node": ">= 20.0"
+    "node": ">= 24.0"
   },
   "scripts": {
     "test": "cucumber-js --config cucumber.js",
