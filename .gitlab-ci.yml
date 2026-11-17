@@ -57,7 +57,7 @@ validate:yaml-lint:
 .varbase-e2e:
   stage: test
   needs: []
-  image: registry.gitlab.com/drupal-infrastructure/drupalci/drupalci-environments/php-8.4-ubuntu-apache:production
+  image: registry.gitlab.com/drupal-infrastructure/drupalci/drupalci-environments/php-8.5-ubuntu-apache:production
   services:
     # MariaDB 11.8 LTS, as in DDEV: vector support needs 11.7 or later.
     - name: mariadb:11.8
