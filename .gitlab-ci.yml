@@ -54,6 +54,8 @@ validate:yaml-lint:
 
 # = test = a fresh Varbase 11 site, the recipe applied twice, then the suite.
 # AI calls go to an amazee.ai trial that Drupal CMS AI sets up: no key needed.
+# When amazee.ai cannot be reached, tests/scripts/ai-provider.sh switches to the
+# AI module's Echo test provider and skips the scenarios tagged @live-ai.
 .varbase-e2e:
   stage: test
   needs: []
@@ -80,6 +82,8 @@ validate:yaml-lint:
     APT_PACKAGES: ""
     # Drupal CMS AI first: it sets up an amazee.ai trial as the default AI provider.
     PROVIDER_RECIPE: "drupal_cms_ai"
+    # Proof only: "1" makes amazee.ai unreachable, so the Echo fallback runs.
+    AMAZEE_UNREACHABLE: ""
     # When set, the recipe must stop with this message before a provider is set up.
     NO_PROVIDER_MESSAGE: "does not have a default model"
     # Packages required next to the recipe: the vector database recipe, and the Varbase Starter dev line for its Drupal CMS Search 2.2.7 fix.
@@ -133,11 +137,9 @@ validate:yaml-lint:
     - for role in content_editor content_admin seo_admin site_admin; do $DRUSH user:create $role --mail=$role@example.test --password=$LOGIN_PASS; $DRUSH user:role:add $role $role; done
     - $DRUSH user:create authenticated_user --mail=authenticated_user@example.test --password=$LOGIN_PASS
     - if [ -n "$NO_PROVIDER_MESSAGE" ]; then ! $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y > /tmp/no-provider.log 2>&1 && grep -q "$NO_PROVIDER_MESSAGE" /tmp/no-provider.log && echo "Stopped without a provider, as expected."; fi
-    - for r in $PROVIDER_RECIPE $BEFORE_RECIPES; do case $r in en:*) $DRUSH pm:enable "${r#en:}" -y;; tests/*) $DRUSH recipe "$CI_PROJECT_DIR/$r" -y;; *) $DRUSH recipe "$_BUILD_DIR/recipes/$r" -y;; esac; $DRUSH cache:rebuild; done
-    # The amazee.ai trial signup can fail for a moment on amazee.ai's side; try it again before giving up.
-    - EMBEDDINGS='echo \Drupal::config("ai.settings")->get("default_providers.embeddings.provider_id");'
-    - for i in 1 2 3; do [ -n "$($DRUSH php:eval "$EMBEDDINGS")" ] && break; sleep 30; $DRUSH recipe $_BUILD_DIR/recipes/drupal_cms_ai -y; $DRUSH cache:rebuild; done
-    - echo "Default embeddings provider - $($DRUSH php:eval "$EMBEDDINGS")"
+    # amazee.ai through Drupal CMS AI, or the Echo test provider when amazee.ai cannot be reached.
+    - . "$CI_PROJECT_DIR/tests/scripts/ai-provider.sh"
+    - for r in $BEFORE_RECIPES; do case $r in en:*) $DRUSH pm:enable "${r#en:}" -y;; tests/*) $DRUSH recipe "$CI_PROJECT_DIR/$r" -y;; *) $DRUSH recipe "$_BUILD_DIR/recipes/$r" -y;; esac; $DRUSH cache:rebuild; done
     # Applied twice: the second run must change nothing and not fail.
     - $DRUSH recipe $_BUILD_DIR/recipes/$RECIPE -y
     - $DRUSH cache:rebuild

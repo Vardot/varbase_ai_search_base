@@ -27,5 +27,11 @@ which sets up an amazee.ai trial as the default provider, so no key is needed an
 real model. Varbase AI VDB: MariaDB is the vector database, on MariaDB 11.8. The chatbot and Ask AI suites ask
 real questions against this index.
 
+When amazee.ai cannot be reached, `tests/scripts/ai-provider.sh` sets the AI module's Echo test provider instead,
+prints "amazee.ai unavailable: running with the Echo test provider" and exports `AI_PROVIDER=echoai`. Echo's
+embeddings are one dimension and not real vectors, so the index is built and connected but nothing is embedded;
+this suite checks the index and its access, not search results, so every scenario still runs. A scenario that
+needs a real model's reply is tagged `@live-ai` and skipped in that mode. `AMAZEE_UNREACHABLE=1` forces it.
+
 The index page is held to the link name and ARIA role checks: Search API's own "Index now"
 fields have no labels, which comes from Search API, not this recipe.
