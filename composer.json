@@ -36,7 +36,7 @@
         "drupal/core": "^11.4 || ^12.0",
         "drupal/key": "^1.18",
         "drupal/search_api": "^1.40",
-        "drupal/varbase_search_base": "^1.0"
+        "drupal/varbase_search_base": "^1"
     },
     "suggest": {
         "drupal/ai_vdb_provider_mariadb": "The vectors in the site's own MariaDB 11.7+ database, no extra service. The only provider with a stable release.",
